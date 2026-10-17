@@ -1,0 +1,8 @@
+# material com copyright, baixar de nand2tetris.org
+materials/
+
+# config da IDE
+.idea/
+
+# saída gerada pelos testes (.tst geram .out)
+*.out
