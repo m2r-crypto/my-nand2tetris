@@ -1,5 +1,5 @@
-# material com copyright, baixar de nand2tetris.org
-materials/
+# PDFs com copyright, baixar de nand2tetris.org (pastas e traducoes sao versionadas)
+materials/**/*.pdf
 
 # config da IDE
 .idea/
