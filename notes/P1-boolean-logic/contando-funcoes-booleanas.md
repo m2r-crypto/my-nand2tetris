@@ -79,6 +79,37 @@ funções = 2^(linhas)   ← princípio multiplicativo nas SAÍDAS
 
 O "2" aparece duas vezes porque o mesmo princípio é usado duas vezes.
 
+### Generalização: os dois "2" têm papéis diferentes
+
+> Complemento de `2026-10-17` (recall da sessão).
+
+Na lógica booleana, entrada e saída são binárias, então as duas bases valem 2. Isso **esconde** que os dois 2 têm significados diferentes. A fórmula geral separa os dois:
+
+```
+linhas  = (valores por entrada)^(nº de entradas)
+funções = (valores da saída)^(linhas)
+```
+
+Cada lado da tabela gera um dos números:
+
+```
+ a  b | saída
+ 0  0 |  ?      ← lado ESQUERDO (o que cabe em a, b) gera as LINHAS
+ 0  1 |  ?      ← lado DIREITO (o que cabe em cada ?) gera as FUNÇÕES
+ 1  0 |  ?
+ 1  1 |  ?
+```
+
+| entradas | valores por entrada | valores da saída | linhas | funções |
+|---|---|---|---|---|
+| 2 | 2 | 2 | 2² = 4 | 2⁴ = 16 |
+| 3 | 2 | 2 | 2³ = 8 | 2⁸ = 256 |
+| 2 | 2 | **3** | 2² = 4 | 3⁴ = **81** |
+| 3 | 2 | **3** | 2³ = 8 | 3⁸ = **6561** |
+| 2 | **3** | **3** | 3² = 9 | 3⁹ = 19683 |
+
+⚠️ **Erro já cometido:** com saída de 0 a 2 e entradas binárias, respondi 3^(3²) = 19683. A conta estava certa, mas para outra pergunta: troquei a base **também nas entradas**. Mudar os valores da saída só mexe no expoente de fora (a base das funções). As linhas continuam 2ᴺ enquanto as entradas forem binárias.
+
 ### Mapa das 16 (colunas nas linhas 00, 01, 10, 11)
 
 | coluna | função |
@@ -122,3 +153,5 @@ A contagem começa em `0`. Quantidade = maior valor + 1 = 2ⁿ.
 1. Com **3 variáveis**: quantas linhas a tabela tem? A coluna de saída tem quantos bits? Quantas funções existem? (Pista: a resposta tem tudo a ver com o byte.)
 2. Por que `Not(Not(x))` e `x` são a mesma função?
 3. Invente uma regra de negócio com 2 condições, escreva a coluna de saída e diga se ela é uma das funções com nome.
+4. Entradas binárias, 4 variáveis, saída podendo ser 0, 1 ou 2: quantas linhas e quantas funções? Qual base mudou e qual não mudou?
+5. Na fórmula 2^(2ᴺ), o que cada um dos dois "2" representa?
