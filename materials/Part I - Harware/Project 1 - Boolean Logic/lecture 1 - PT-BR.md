@@ -85,6 +85,244 @@ As funções mais comuns:
 
 > 🔧 De onde vem essa fórmula, passo a passo: [nota: Por que existem 16 funções](../../../notes/P1-boolean-logic/contando-funcoes-booleanas.md).
 
+> **🔧 Complemento (§1.2.1–1.2.6):** as subseções abaixo não estão nos slides. Detalham, uma a uma, as funções da tabela acima (mais o Nor). As implementações em HDL ficam de fora de propósito, porque são o exercício do Project 1.
+>
+> Todas seguem o mesmo roteiro: **regra → tabela → intuição → leis → mais de 2 entradas → pegadinha → teste rápido**.
+
+**Truque para reconhecer qualquer porta de 2 entradas:** conte quantos 1 tem a coluna de saída e veja **em qual linha** eles estão.
+
+| Porta | Quantos 1 na saída | Linha que se destaca |
+|---|---|---|
+| And | 1 | o único 1 está em `a=1, b=1` |
+| Or | 3 | o único 0 está em `a=0, b=0` |
+| Nand | 3 | o único 0 está em `a=1, b=1` |
+| Nor | 1 | o único 1 está em `a=0, b=0` |
+| Xor | 2 | os 1 estão onde `a ≠ b` |
+
+Repare: o **Nand é o And com a coluna invertida**, e o **Nor é o Or com a coluna invertida**.
+
+#### 1.2.1 Porta lógica And 🔧
+
+**Regra:** a saída é 1 **só quando todas** as entradas são 1. Basta um 0 na entrada para a saída ser 0.
+
+| a | b | And(a, b) |
+|---|---|---|
+| 0 | 0 | 0 |
+| 0 | 1 | 0 |
+| 1 | 0 | 0 |
+| 1 | 1 | **1** |
+
+**Intuição:** é uma lista de requisitos. "Só entro se tiver crachá **e** a porta estiver destravada." Um requisito falhando já barra.
+
+**Notação:** `a And b`, `a · b`, `ab`, `a ∧ b`. A notação de multiplicação (`·`) não é por acaso: com 0 e 1, `a · b` dá exatamente a tabela do And.
+
+**Em Java:**
+```java
+boolean ok = temCracha && portaDestravada; // lógico, com short-circuit
+int baixo  = x & 0xFF;                    // bit a bit: fica só com os 8 bits de baixo
+```
+
+**Físico:** duas chaves em **série**. A corrente só passa se as duas estiverem fechadas (§2.1).
+
+**Leis (teste cada uma na tabela):**
+- `a And 1 = a` → o 1 é **neutro**, deixa passar.
+- `a And 0 = 0` → o 0 **domina**, zera tudo.
+- `a And a = a` → repetir não muda nada.
+- `a And Not(a) = 0` → uma coisa e o seu contrário nunca valem ao mesmo tempo.
+
+As duas primeiras são a base da **máscara de bits**: And com 1 preserva o bit, And com 0 apaga o bit.
+
+**Com mais de 2 entradas:** `And(a, b, c, …)` é 1 só se **todas** forem 1. Com N entradas, a tabela tem 2ᴺ linhas e **só uma** delas dá 1. É o And3 da §2.1, montado como `And(And(a, b), c)`.
+
+**Pegadinha:** `Not(a And b)` **não é** `Not(a) And Not(b)`. Teste com `a=1, b=0`: o primeiro dá 1 e o segundo dá 0. O certo é `Not(a) Or Not(b)` (De Morgan, §1.4).
+
+<details><summary>Teste rápido: quanto é <code>0b1011 & 0b0110</code>?</summary>
+
+Bit a bit, só fica 1 onde os dois têm 1: `0b0010`.
+</details>
+
+#### 1.2.2 Porta lógica Or 🔧
+
+**Regra:** a saída é 1 quando **pelo menos uma** entrada é 1. Só dá 0 se todas forem 0.
+
+| a | b | Or(a, b) |
+|---|---|---|
+| 0 | 0 | **0** |
+| 0 | 1 | 1 |
+| 1 | 0 | 1 |
+| 1 | 1 | 1 |
+
+**Intuição:** é um alarme com vários sensores. Basta **um** disparar para o alarme tocar.
+
+**Notação:** `a Or b`, `a + b`, `a ∨ b`. Cuidado com o `+`: aqui `1 + 1 = 1`. Não é soma aritmética.
+
+**Em Java:**
+```java
+boolean alarme = sensorPorta || sensorJanela;
+int perms = perms | WRITE;   // liga o bit WRITE sem mexer nos outros
+```
+
+**Físico:** duas chaves em **paralelo**. Qualquer caminho fechado acende a lâmpada.
+
+**Leis:**
+- `a Or 0 = a` → aqui o 0 é o **neutro**.
+- `a Or 1 = 1` → aqui o 1 **domina**.
+- `a Or a = a`.
+- `a Or Not(a) = 1` → ou é, ou não é: sempre um dos dois vale.
+
+Compare com o And: os papéis de 0 e 1 **trocam**. Essa simetria se chama **dualidade**. Toda lei do And vira uma lei do Or trocando `And↔Or` e `0↔1`.
+
+**Com mais de 2 entradas:** `Or(a, b, c, …)` é 1 se **qualquer** uma for 1. Das 2ᴺ linhas, **só uma** dá 0: a de tudo zero. O chip `Or8Way` do Project 1 é exatamente isso, com 8 entradas.
+
+**Pegadinha:** é um "ou" **inclusivo**. `1 Or 1 = 1`. O "ou" do português ("café ou chá?") costuma ser exclusivo, e esse é o Xor (§1.2.6).
+
+<details><summary>Teste rápido: <code>x | 0b0100</code> faz o quê com o bit 2 de x? E com os outros bits?</summary>
+
+Força o bit 2 para 1 (o 1 domina). Os outros bits ficam como estavam (o 0 é neutro).
+</details>
+
+#### 1.2.3 Porta lógica Not 🔧
+
+**Regra:** inverte a entrada. Recebe 0 e devolve 1, recebe 1 e devolve 0. É a única porta aqui com **uma entrada só**.
+
+| in | Not(in) |
+|---|---|
+| 0 | 1 |
+| 1 | 0 |
+
+**Intuição:** um interruptor ao contrário. Apertou, apaga. Soltou, acende.
+
+**Notação:** `Not(a)`, `¬a`, `a'`, `ā` (barra em cima).
+
+**Em Java:**
+```java
+boolean fechado = !aberto;
+int inv = ~x;   // inverte os 32 bits do int
+```
+
+**Físico:** um transistor que, quando a entrada liga, "puxa" a saída para o 0. Em CMOS é o circuito mais simples que existe: 2 transistores.
+
+**Leis:**
+- `Not(Not(a)) = a` → inverter duas vezes devolve o original.
+- `Not(0) = 1` e `Not(1) = 0`.
+
+**Pegadinha (Java):** `~5` dá **-6**, não 2. O `~` inverte **todos** os 32 bits do int, inclusive os zeros à esquerda e o bit de sinal (complemento de dois, que volta no Cap. 2). O Not só inverte os bits que existem, e um int tem 32.
+
+<details><summary>Teste rápido: na §1.4, como sai um Not usando só Nand?</summary>
+
+`Not(a) = Nand(a, a)`. Com as duas entradas iguais, a tabela do Nand só usa as linhas `00` e `11`, que dão 1 e 0.
+</details>
+
+#### 1.2.4 Porta lógica Nand 🔧
+
+**Regra:** é um **And seguido de Not**. A saída só é 0 quando todas as entradas são 1.
+
+| a | b | Nand(a, b) |
+|---|---|---|
+| 0 | 0 | 1 |
+| 0 | 1 | 1 |
+| 1 | 0 | 1 |
+| 1 | 1 | **0** |
+
+**Intuição:** "pelo menos uma entrada está desligada?". Se sim, a saída é 1.
+
+**Notação:** `a Nand b`, `Not(a And b)`, `a ↑ b` (seta de Sheffer).
+
+**Em Java:** `!(a && b)`. Não tem operador próprio.
+
+**Físico:** em CMOS, o Nand de 2 entradas usa **4 transistores**. O And usa **6**, porque é um Nand (4) mais um Not (2) na saída. Por isso, no hardware real, o Nand é a porta "natural" e o And é derivado.
+
+**Por que importa: universalidade.**
+1. Com Nand se faz Not: `Nand(a, a)`.
+2. Com Nand e Not se faz And: `Not(Nand(a, b))`.
+3. Com Not e And se faz Or (De Morgan).
+4. Com Not, And e Or se faz **qualquer** tabela-verdade (DNF).
+
+Logo, só Nand basta (§1.4). No curso é a única porta que vem pronta, e todo o resto você constrói a partir dela.
+
+**Com mais de 2 entradas:** `Nand(a, b, c)` = `Not(And(a, b, c))`. Das 2ᴺ linhas, só a de tudo 1 dá 0.
+
+**Pegadinha:** Nand **não é associativo**. `Nand(Nand(a, b), c)` ≠ `Nand(a, Nand(b, c))`. Teste com `a=0, b=0, c=0`: o primeiro dá 1 e o segundo dá 1… agora teste com `a=0, b=1, c=1` e veja divergir. Por isso não dá para encadear Nand como se encadeia And.
+
+<details><summary>Teste rápido: calcule os dois lados da pegadinha com a=0, b=1, c=1.</summary>
+
+`Nand(Nand(0,1), 1) = Nand(1, 1) = 0`.
+`Nand(0, Nand(1,1)) = Nand(0, 0) = 1`.
+Resultados diferentes, logo não é associativo.
+</details>
+
+#### 1.2.5 Porta lógica Nor 🔧
+
+**Regra:** é um **Or seguido de Not**. A saída só é 1 quando todas as entradas são 0.
+
+| a | b | Nor(a, b) |
+|---|---|---|
+| 0 | 0 | **1** |
+| 0 | 1 | 0 |
+| 1 | 0 | 0 |
+| 1 | 1 | 0 |
+
+**Intuição:** "nenhum dos dois". "Nem chove, nem venta → saio de bicicleta."
+
+**Notação:** `a Nor b`, `Not(a Or b)`, `a ↓ b` (seta de Peirce).
+
+**Em Java:** `!(a || b)`.
+
+**Relação com o Nand:** é o espelho dele pela dualidade.
+- De Morgan: `Nor(a, b) = Not(a) And Not(b)`, e `Nand(a, b) = Not(a) Or Not(b)`.
+- Também é universal: `Nor(a, a) = Not(a)`, e daí se monta o resto.
+
+**Curiosidade:** o computador de bordo da Apollo (AGC) foi construído só com portas Nor. Usar um tipo só de porta simplificava a fabricação e o controle de qualidade. O Nor não está entre os 15 chips do Project 1.
+
+**Pegadinha:** `Nor(a, b)` é `Not(a) And Not(b)`, **não** `Not(a) Or Not(b)`. Essa segunda é o Nand. É fácil trocar as duas.
+
+<details><summary>Teste rápido: na tabela, Nor(a,b) é igual a And de quais duas coisas?</summary>
+
+`And(Not(a), Not(b))`. A única linha que dá 1 é a `00`, que é justamente onde `Not(a)=1` e `Not(b)=1`.
+</details>
+
+#### 1.2.6 Porta lógica Xor 🔧
+
+**Regra:** *eXclusive Or*. A saída é 1 quando as entradas são **diferentes**.
+
+| a | b | Xor(a, b) |
+|---|---|---|
+| 0 | 0 | 0 |
+| 0 | 1 | **1** |
+| 1 | 0 | **1** |
+| 1 | 1 | 0 |
+
+**Intuição:** o interruptor de escada (*three-way switch*). Duas chaves controlam a mesma lâmpada, e mexer em **qualquer uma** inverte o estado da lâmpada.
+
+**Notação:** `a Xor b`, `a ⊕ b`.
+
+**Em Java:**
+```java
+boolean diferentes = a != b;   // para boolean, Xor é "diferente"
+x = x ^ mask;                  // inverte só os bits marcados na máscara
+```
+
+**Comparando com o Or:** só a última linha muda. `1 Or 1 = 1`, mas `1 Xor 1 = 0`.
+
+**Três leituras da mesma tabela:**
+1. **Detector de diferença:** 1 quando `a ≠ b`. O inverso (Xnor) é o detector de **igualdade**.
+2. **Inversor controlado:** `Xor(a, 0) = a` e `Xor(a, 1) = Not(a)`. A entrada `b` decide se `a` passa normal ou invertido.
+3. **Soma de 1 bit sem o vai-um:** `1 + 1 = 10` em binário, e o bit da direita é `1 Xor 1 = 0`. Isso volta no Half Adder (Cap. 2).
+
+**Leis:**
+- `a Xor 0 = a` e `a Xor a = 0`.
+- É associativo e comutativo, então a ordem não importa.
+- Por causa das duas leis acima, `(a Xor b) Xor b = a`. Aplicar a mesma máscara duas vezes desfaz. É a base da criptografia de *one-time pad* e da paridade em RAID.
+
+**Com mais de 2 entradas:** `Xor(a, b, c, …)` é 1 quando a **quantidade de 1 é ímpar**. Por isso se chama **paridade**.
+
+**Pegadinha:** Xor de 3 entradas **não é** "exatamente uma é 1". Com `1 Xor 1 Xor 1`: `(1 Xor 1) = 0`, depois `0 Xor 1 = 1`. Três uns, quantidade ímpar, saída 1.
+
+<details><summary>Teste rápido: escreva o Xor de 2 entradas usando só And, Or e Not.</summary>
+
+Sem resposta aqui de propósito, porque é o `Xor.hdl` do Project 1. Dica: aplique a DNF (§1.4 e Complemento "DNF passo a passo") nas duas linhas que dão 1.
+</details>
+
 ### 1.3 Avaliação de função booleana `[s23–s24]`
 
 Avaliar `Not(x Or (y And z))` para, digamos, x = 0, y = 1, z = 1:
